@@ -1,0 +1,9 @@
+/build/
+/target/
+dependency-reduced-pom.xml
+.metadata/
+.classpath
+.project
+.settings/
+*.war
+*.jar
