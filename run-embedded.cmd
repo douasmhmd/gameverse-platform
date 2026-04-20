@@ -1,9 +1,14 @@
 @echo off
-REM TP5 — Tomcat embarqué (après mvn package)
-REM Connexion DB : définir DB_URL, DB_USER, DB_PASSWORD (ex. Render ou PostgreSQL local)
-REM set DB_URL=jdbc:postgresql://...
-REM set DB_USER=...
-REM set DB_PASSWORD=...
+REM TP5 — Tomcat embarqué (mode développement)
+set DB_URL=jdbc:postgresql://localhost:5432/gameverseacademy
+set DB_USER=postgres
+set DB_PASSWORD=0636
+
 cd /d "%~dp0"
+
+echo Compilation du projet...
+call mvn clean package -q
+
+echo.
 echo Lancement sur http://localhost:6060/gameverseacademy/
-call mvn -q exec:java
+call mvn exec:java -Dexec.mainClass="ma.ac.esi.gameverseacademy.Main"

@@ -1,4 +1,4 @@
--- Table mods (nouvelle installation) — inclut la colonne status (TP3).
+-- Table mods (nouvelle installation) 
 
 CREATE TABLE IF NOT EXISTS mods (
     id           SERIAL PRIMARY KEY,

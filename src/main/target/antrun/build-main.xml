@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <copy file="C:\Projects\gameverseacademyv1-0-douasmhmd\target/GameVerseAcademy-0.0.1-SNAPSHOT.war" tofile="C:\Projects\gameverseacademyv1-0-douasmhmd\target\classes/embedded.war" overwrite="true" />
+  </target>
+</project>
