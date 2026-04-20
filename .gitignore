@@ -7,3 +7,4 @@ dependency-reduced-pom.xml
 .settings/
 *.war
 *.jar
+tomcat.6060/ 
