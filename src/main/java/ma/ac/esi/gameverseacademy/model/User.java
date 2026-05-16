@@ -1,13 +1,10 @@
 package ma.ac.esi.gameverseacademy.model;
 
-/**
- * Utilisateur applicatif. Le mot de passe ne doit pas rester stocké en session après connexion.
- */
+
 public class User {
 
 	private String email;
 	private String password;
-	/** Ex. USER, ADMIN */
 	private String role;
 
 	public User(String email, String password, String role) {

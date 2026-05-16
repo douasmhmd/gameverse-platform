@@ -4,9 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import ma.ac.esi.gameverseacademy.model.User;
 
-/**
- * Vérifications de session mutualisées (TP4).
- */
+
 public final class AuthUtil {
 
 	private AuthUtil() {

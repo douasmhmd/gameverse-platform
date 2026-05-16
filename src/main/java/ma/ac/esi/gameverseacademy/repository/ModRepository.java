@@ -34,7 +34,6 @@ public class ModRepository {
 		return queryMods(SELECT_ALL);
 	}
 
-	/** Liste publique : uniquement les mods validés */
 	public List<Mod> getApprovedMods() {
 		return queryMods(SELECT_APPROVED);
 	}

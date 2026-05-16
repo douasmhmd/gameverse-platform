@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Accès refusé — GameVerse Academy</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .box { max-width: 480px; padding: 32px; background: #16213e; border-radius: 12px; text-align: center; }
-    h1 { color: #e94560; margin-top: 0; }
-    p { color: #aaa; line-height: 1.5; }
-    a { color: #4A90D9; }
-  </style>
+  <title>GameVerse Academy — Accès refusé</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="assets/css/gameverse-neon.css">
 </head>
 <body>
-  <div class="box">
-    <h1>403 — Accès refusé</h1>
-    <p>Cette page est réservée aux administrateurs.</p>
-    <p><a href="index.html">Retour à la connexion</a> · <a href="home.html">Accueil</a></p>
+
+<div class="error-wrapper">
+  <div class="error-card">
+    <div class="error-code">403</div>
+    <h2 style="margin:16px 0 20px; color:var(--neon-magenta); letter-spacing:2px;">Accès refusé</h2>
+    <p style="color:var(--text-dim); margin-bottom:28px; line-height:1.6;">
+      Vous n'avez pas les permissions nécessaires<br>pour accéder à cette ressource.
+    </p>
+    <a href="home.html" class="btn btn-primary">
+      <i class="bi bi-house"></i> Retour à l'accueil
+    </a>
   </div>
+</div>
+
 </body>
 </html>

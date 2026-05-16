@@ -16,7 +16,6 @@ public class Mod {
 	private String platform;
 	private String releaseDate;
 	private int metacritic;
-	/** PENDING, APPROVED, REJECTED — validation administrateur (TP3) */
 	private String status;
 
 	public Mod(int id, String title, String category, String author, String description, int downloads,

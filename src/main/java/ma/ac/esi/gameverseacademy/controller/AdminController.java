@@ -12,9 +12,7 @@ import ma.ac.esi.gameverseacademy.model.Mod;
 import ma.ac.esi.gameverseacademy.service.ModService;
 import ma.ac.esi.gameverseacademy.util.AuthUtil;
 
-/**
- * Modération : réservé au rôle ADMIN (TP4).
- */
+
 @WebServlet("/AdminController")
 public class AdminController extends HttpServlet {
 

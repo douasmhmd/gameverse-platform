@@ -7,7 +7,7 @@
   <groupId>ma.ac.esi</groupId>
   <artifactId>GameVerseAcademy</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <!-- Correction prof : JAR exécutable (Tomcat embarqué + shade). Structure Eclipse/Maven : src/main/java + src/main/webapp -->
+  <!-- Correction : JAR exécutable (Tomcat embarqué + shade). Structure Eclipse/Maven : src/main/java + src/main/webapp -->
   <packaging>jar</packaging>
   <name>GameVerse Academy</name>
 
@@ -18,14 +18,12 @@
   </properties>
 
   <dependencies>
-    <!-- Pilote JDBC PostgreSQL -->
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>42.7.3</version>
     </dependency>
 
-    <!-- Tomcat embarqué (API Servlet incluse — pas besoin de servlet-api séparé pour ce mode) -->
     <dependency>
       <groupId>org.apache.tomcat.embed</groupId>
       <artifactId>tomcat-embed-core</artifactId>
@@ -44,7 +42,6 @@
   </dependencies>
 
   <build>
-    <!-- src/main/java par défaut — ne pas utiliser <sourceDirectory>src seul si ton projet est en layout Maven standard -->
 
     <plugins>
       <!-- Évite le conflit « classifier » (maven-jar-plugin 3.4 + shade) : le JAR final est uniquement le fat JAR -->
