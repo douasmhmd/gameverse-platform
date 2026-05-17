@@ -12,7 +12,6 @@ on:
       - main
       - develop
   schedule:
-    # Scrutation automatique du dépôt toutes les 15 minutes
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
@@ -58,10 +57,10 @@ jobs:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
     needs: build
-     permissions:
+    permissions:
       contents: read
-      checks: write      
-      pull-requests: write 
+      checks: write
+      pull-requests: write
 
     steps:
       - name: Checkout source code
@@ -184,12 +183,11 @@ jobs:
     name: 🚀 Publish to GitHub Packages
     runs-on: ubuntu-latest
     needs: package
-    # Déploiement uniquement depuis main ou develop
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
 
     permissions:
       contents: read
-      packages: write   # Nécessaire pour publier sur GitHub Packages
+      packages: write
 
     steps:
       - name: Checkout source code
