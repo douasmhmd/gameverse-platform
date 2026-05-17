@@ -7,7 +7,6 @@
   <groupId>ma.ac.esi</groupId>
   <artifactId>GameVerseAcademy</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <!-- Correction : JAR exécutable (Tomcat embarqué + shade). Structure Eclipse/Maven : src/main/java + src/main/webapp -->
   <packaging>jar</packaging>
   <name>GameVerse Academy</name>
 
@@ -39,7 +38,7 @@
       <artifactId>tomcat-embed-el</artifactId>
       <version>${tomcat.embed.version}</version>
     </dependency>
-<dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>5.10.2</version>
@@ -48,9 +47,18 @@
   </dependencies>
 
   <build>
+    <!-- Tell Maven to include webapp resources in the JAR -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/webapp</directory>
+        <targetPath>META-INF/resources</targetPath>
+      </resource>
+    </resources>
 
     <plugins>
-      <!-- Évite le conflit « classifier » (maven-jar-plugin 3.4 + shade) : le JAR final est uniquement le fat JAR -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -60,100 +68,43 @@
         </configuration>
       </plugin>
 
-      <!-- Construit un WAR dans target/ (nécessaire pour embarquer embedded.war dans le JAR standalone) -->
-      <plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-jar-plugin</artifactId>
-  <version>3.5.0</version>
-  <executions>
-    <execution>
-      <id>default-jar</id>
-      <phase>none</phase>
-    </execution>
-  </executions>
-</plugin>
 
-
-<plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-war-plugin</artifactId>
-  <version>3.4.0</version>
-  <executions>
-    <execution>
-      <id>build-war-for-embed</id>
-      <phase>prepare-package</phase>
-      <goals>
-        <goal>war</goal>
-      </goals>
-      <configuration>
-        <warSourceDirectory>src/main/webapp</warSourceDirectory>
-        <failOnMissingWebXml>false</failOnMissingWebXml>
-        <warName>GameVerseAcademy-${project.version}</warName>
-        <attach>false</attach>
-      </configuration>
-    </execution>
-  </executions>
-</plugin>
-
-      <!-- Copie le WAR dans target/classes pour que le shade l’inclue comme embedded.war (lu par Main) -->
+      <!-- Create fat JAR with embedded Tomcat and JSPs -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.1.0</version>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.2</version>
         <executions>
           <execution>
-            <id>copy-embedded-war</id>
-            <phase>prepare-package</phase>
+            <phase>package</phase>
             <goals>
-              <goal>run</goal>
+              <goal>shade</goal>
             </goals>
             <configuration>
-              <target>
-                <copy file="${project.build.directory}/GameVerseAcademy-${project.version}.war"
-                      tofile="${project.build.outputDirectory}/embedded.war"
-                      overwrite="true"/>
-              </target>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
       </plugin>
 
-      <!-- Fat JAR exécutable : java -jar target/GameVerseAcademy-standalone.jar -->
       <plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-shade-plugin</artifactId>
-  <version>3.5.2</version>
-  <executions>
-    <execution>
-      <phase>package</phase>
-      <goals>
-        <goal>shade</goal>
-      </goals>
-      <configuration>
-        <shadedArtifactAttached>false</shadedArtifactAttached>
-        <createDependencyReducedPom>false</createDependencyReducedPom>
-        <finalName>GameVerseAcademy-0.0.1-SNAPSHOT</finalName>
-        <transformers>
-          <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-            <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
-          </transformer>
-          <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-        </transformers>
-        <filters>
-          <filter>
-            <artifact>*:*</artifact>
-            <excludes>
-              <exclude>META-INF/*.SF</exclude>
-              <exclude>META-INF/*.DSA</exclude>
-              <exclude>META-INF/*.RSA</exclude>
-            </excludes>
-          </filter>
-        </filters>
-      </configuration>
-    </execution>
-  </executions>
-</plugin>
-<plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.12</version>
@@ -173,7 +124,22 @@
           </execution>
         </executions>
       </plugin>
+      
+      <!-- Let default JAR plugin run normally -->
 <plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-jar-plugin</artifactId>
+  <version>3.5.0</version>
+  <configuration>
+    <archive>
+      <manifest>
+        <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
+      </manifest>
+    </archive>
+  </configuration>
+</plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.6.3</version>
@@ -185,16 +151,17 @@
       </plugin>
     </plugins>
   </build>
-<distributionManagement>
-  <repository>
-    <id>github</id>
-    <name>GitHub Packages</name>
-    <url>https://maven.pkg.github.com/douasmhmd/gameverse-platform</url>
-  </repository>
-  <snapshotRepository>
-    <id>github</id>
-    <name>GitHub Packages Snapshots</name>
-    <url>https://maven.pkg.github.com/douasmhmd/gameverse-platform</url>
-  </snapshotRepository>
-</distributionManagement>
+
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/douasmhmd/gameverse-platform</url>
+    </repository>
+    <snapshotRepository>
+      <id>github</id>
+      <name>GitHub Packages Snapshots</name>
+      <url>https://maven.pkg.github.com/douasmhmd/gameverse-platform</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>
