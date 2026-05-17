@@ -203,12 +203,22 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      - name: Publish package to GitHub Packages
+      - name: Build fat JAR
+        run: mvn package -DskipTests -B --no-transfer-progress
+
+      - name: Deploy JAR to GitHub Packages
         run: |
-          mvn deploy -DskipTests -B --no-transfer-progress \
-            -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }} \
-            -DaltReleaseDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }} \
-            -DaltSnapshotDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
+          JAR_FILE=$(ls target/GameVerseAcademy-*.jar | grep -v original | head -1)
+          echo "Deploying: $JAR_FILE"
+          mvn deploy:deploy-file \
+            -Dfile=$JAR_FILE \
+            -DgroupId=ma.ac.esi \
+            -DartifactId=GameVerseAcademy \
+            -Dversion=0.0.1-SNAPSHOT \
+            -Dpackaging=jar \
+            -DrepositoryId=github \
+            -Durl=https://maven.pkg.github.com/${{ github.repository }} \
+            -B --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
