@@ -122,7 +122,7 @@ jobs:
             🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   package:
-    name: 📦 Package (WAR)
+    name: 📦 Package (JAR)
     runs-on: ubuntu-latest
     needs: test
 
@@ -137,14 +137,19 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build WAR package
+      - name: Build shaded JAR
         run: mvn package -DskipTests -B --no-transfer-progress
 
-      - name: Upload WAR artifact
+      - name: Rename WAR to JAR (shade plugin output)
+        run: |
+          mv target/GameVerseAcademy-0.0.1-SNAPSHOT.war target/GameVerseAcademy-0.0.1-SNAPSHOT.jar
+          ls -lh target/*.jar
+
+      - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GameVerseAcademy-war
-          path: target/GameVerseAcademy-*.war
+          name: GameVerseAcademy-jar
+          path: target/GameVerseAcademy-*.jar
           retention-days: 30
 
       - name: Send email on package failure
@@ -191,9 +196,23 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      - name: Publish to GitHub Packages (skip shade)
+      - name: Build shaded JAR
+        run: mvn package -DskipTests -B --no-transfer-progress
+
+      - name: Rename WAR to JAR for deployment
+        run: mv target/GameVerseAcademy-0.0.1-SNAPSHOT.war target/GameVerseAcademy-0.0.1-SNAPSHOT.jar
+
+      - name: Deploy JAR to GitHub Packages
         run: |
-          mvn deploy -DskipTests -Dshade.skip=true -B --no-transfer-progress
+          mvn deploy:deploy-file \
+            -Dfile=target/GameVerseAcademy-0.0.1-SNAPSHOT.jar \
+            -DgroupId=ma.ac.esi \
+            -DartifactId=GameVerseAcademy \
+            -Dversion=0.0.1-SNAPSHOT \
+            -Dpackaging=jar \
+            -DrepositoryId=github \
+            -Durl=https://maven.pkg.github.com/${{ github.repository }} \
+            -B --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -222,7 +241,7 @@ jobs:
             Registry : https://github.com/${{ github.repository }}/packages
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-            L'artefact WAR est disponible dans GitHub Packages.
+            L'artefact JAR est disponible dans GitHub Packages.
 
             🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 

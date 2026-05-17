@@ -8,7 +8,7 @@
   <artifactId>GameVerseAcademy</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <!-- Correction : JAR exécutable (Tomcat embarqué + shade). Structure Eclipse/Maven : src/main/java + src/main/webapp -->
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
   <name>GameVerse Academy</name>
 
   <properties>
@@ -62,26 +62,38 @@
 
       <!-- Construit un WAR dans target/ (nécessaire pour embarquer embedded.war dans le JAR standalone) -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>3.4.0</version>
-        <executions>
-          <execution>
-            <id>build-war-for-embed</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>war</goal>
-            </goals>
-            <configuration>
-              <warSourceDirectory>src/main/webapp</warSourceDirectory>
-              <failOnMissingWebXml>false</failOnMissingWebXml>
-              <warName>GameVerseAcademy-${project.version}</warName>
-              <!-- packaging=jar : ne pas attacher le WAR comme artefact principal -->
-              <attach>false</attach>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-jar-plugin</artifactId>
+  <version>3.5.0</version>
+  <executions>
+    <execution>
+      <id>default-jar</id>
+      <phase>none</phase>
+    </execution>
+  </executions>
+</plugin>
+
+
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-war-plugin</artifactId>
+  <version>3.4.0</version>
+  <executions>
+    <execution>
+      <id>build-war-for-embed</id>
+      <phase>prepare-package</phase>
+      <goals>
+        <goal>war</goal>
+      </goals>
+      <configuration>
+        <warSourceDirectory>src/main/webapp</warSourceDirectory>
+        <failOnMissingWebXml>false</failOnMissingWebXml>
+        <warName>GameVerseAcademy-${project.version}</warName>
+        <attach>false</attach>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
 
       <!-- Copie le WAR dans target/classes pour que le shade l’inclue comme embedded.war (lu par Main) -->
       <plugin>
@@ -120,7 +132,7 @@
       <configuration>
         <shadedArtifactAttached>false</shadedArtifactAttached>
         <createDependencyReducedPom>false</createDependencyReducedPom>
-        <shadedClassifierName>shaded</shadedClassifierName>  <!-- ADD THIS LINE -->
+        
         <transformers>
           <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
             <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
