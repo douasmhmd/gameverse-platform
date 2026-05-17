@@ -12,7 +12,6 @@ on:
       - main
       - develop
   schedule:
-    # Scrutation automatique du dépôt toutes les 15 minutes
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
@@ -23,9 +22,6 @@ env:
   VERSION: '0.0.1-SNAPSHOT'
 
 jobs:
-  # ─────────────────────────────────────────────
-  # JOB 1 — BUILD & COMPILE
-  # ─────────────────────────────────────────────
   build:
     name: 🔨 Build & Compile
     runs-on: ubuntu-latest
@@ -51,9 +47,6 @@ jobs:
           path: target/classes/
           retention-days: 1
 
-  # ─────────────────────────────────────────────
-  # JOB 2 — TESTS
-  # ─────────────────────────────────────────────
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
@@ -128,11 +121,8 @@ jobs:
 
             🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-  # ─────────────────────────────────────────────
-  # JOB 3 — PACKAGE
-  # ─────────────────────────────────────────────
   package:
-    name: 📦 Package & Archive
+    name: 📦 Package (WAR)
     runs-on: ubuntu-latest
     needs: test
 
@@ -150,42 +140,14 @@ jobs:
       - name: Build WAR package
         run: mvn package -DskipTests -B --no-transfer-progress
 
-      - name: Upload WAR artifact to GitHub Actions
+      - name: Upload WAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: GameVerseAcademy-war
           path: target/GameVerseAcademy-*.war
-          retention-days: 90
+          retention-days: 30
 
-      - name: Send success email
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.MAIL_SMTP_HOST }}
-          server_port: ${{ secrets.MAIL_SMTP_PORT }}
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "✅ [CI SUCCESS] GameVerse Academy v0.0.1-SNAPSHOT — Build réussi"
-          to: ${{ secrets.MAIL_RECIPIENT }}
-          from: GameVerse CI <${{ secrets.MAIL_USERNAME }}>
-          body: |
-            ✅ BUILD RÉUSSI — GameVerse Academy
-
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            Projet   : GameVerse Academy
-            GroupId  : ma.ac.esi
-            Version  : 0.0.1-SNAPSHOT
-            Branche  : ${{ github.ref_name }}
-            Commit   : ${{ github.sha }}
-            Auteur   : ${{ github.actor }}
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-            Le WAR a été packagé et archivé avec succès.
-            Artefact disponible dans GitHub Actions (90 jours de rétention).
-
-            🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      - name: Send failure email
+      - name: Send email on package failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -198,6 +160,85 @@ jobs:
           from: GameVerse CI <${{ secrets.MAIL_USERNAME }}>
           body: |
             🔴 ÉCHEC DU PACKAGING — GameVerse Academy
+
+            Branche : ${{ github.ref_name }}
+            Commit  : ${{ github.sha }}
+            Auteur  : ${{ github.actor }}
+
+            🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+  publish:
+    name: 🚀 Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    needs: package
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 with GitHub Packages
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Publish to GitHub Packages (skip shade)
+        run: |
+          mvn deploy -DskipTests -Dshade.skip=true -B --no-transfer-progress
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+
+      - name: Send success email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP_HOST }}
+          server_port: ${{ secrets.MAIL_SMTP_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ [CI SUCCESS] GameVerse Academy v0.0.1-SNAPSHOT publié sur GitHub Packages"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: GameVerse CI <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ✅ PUBLICATION RÉUSSIE — GitHub Packages
+
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            Projet   : GameVerse Academy
+            GroupId  : ma.ac.esi
+            Version  : 0.0.1-SNAPSHOT
+            Branche  : ${{ github.ref_name }}
+            Commit   : ${{ github.sha }}
+            Auteur   : ${{ github.actor }}
+            Registry : https://github.com/${{ github.repository }}/packages
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            L'artefact WAR est disponible dans GitHub Packages.
+
+            🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send failure email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP_HOST }}
+          server_port: ${{ secrets.MAIL_SMTP_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ [CI FAILURE] Publication GitHub Packages échouée — GameVerse Academy"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: GameVerse CI <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            🔴 ÉCHEC DE LA PUBLICATION — GitHub Packages
 
             Branche : ${{ github.ref_name }}
             Commit  : ${{ github.sha }}
