@@ -51,17 +51,6 @@
 
     <plugins>
       <!-- Évite le conflit « classifier » (maven-jar-plugin 3.4 + shade) : le JAR final est uniquement le fat JAR -->
-     <plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-jar-plugin</artifactId>
-  <version>3.4.1</version>
-  <executions>
-    <execution>
-      <id>default-jar</id>
-      <phase>none</phase>
-    </execution>
-  </executions>
-</plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -119,39 +108,39 @@
 
       <!-- Fat JAR exécutable : java -jar target/GameVerseAcademy-standalone.jar -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.2</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <!-- Un seul artefact : JAR exécutable (remplace le jar « normal ») -->
-              <shadedArtifactAttached>false</shadedArtifactAttached>
-<createDependencyReducedPom>false</createDependencyReducedPom>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
-                </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-              </transformers>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-              </filters>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-shade-plugin</artifactId>
+  <version>3.5.2</version>
+  <executions>
+    <execution>
+      <phase>package</phase>
+      <goals>
+        <goal>shade</goal>
+      </goals>
+      <configuration>
+        <shadedArtifactAttached>false</shadedArtifactAttached>
+        <createDependencyReducedPom>false</createDependencyReducedPom>
+        <shadedClassifierName>shaded</shadedClassifierName>  <!-- ADD THIS LINE -->
+        <transformers>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+            <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
+          </transformer>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+        </transformers>
+        <filters>
+          <filter>
+            <artifact>*:*</artifact>
+            <excludes>
+              <exclude>META-INF/*.SF</exclude>
+              <exclude>META-INF/*.DSA</exclude>
+              <exclude>META-INF/*.RSA</exclude>
+            </excludes>
+          </filter>
+        </filters>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
 <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
