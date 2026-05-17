@@ -131,7 +131,7 @@ jobs:
   # JOB 3 — PACKAGE
   # ─────────────────────────────────────────────
   package:
-    name: 📦 Package (Fat JAR)
+    name: 📦 Package (WAR)
     runs-on: ubuntu-latest
     needs: test
 
@@ -146,14 +146,14 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build fat JAR (maven-shade-plugin)
+      - name: Build WAR package
         run: mvn package -DskipTests -B --no-transfer-progress
 
-      - name: Upload JAR artifact
+      - name: Upload WAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GameVerseAcademy-jar
-          path: target/GameVerseAcademy-*.jar
+          name: GameVerseAcademy-war
+          path: target/GameVerseAcademy-*.war
           retention-days: 30
 
       - name: Send email on package failure
@@ -203,19 +203,19 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      - name: Build fat JAR
+      - name: Build WAR package
         run: mvn package -DskipTests -B --no-transfer-progress
 
-      - name: Deploy JAR to GitHub Packages
+      - name: Deploy WAR to GitHub Packages
         run: |
-          JAR_FILE=$(ls target/GameVerseAcademy-*.jar | grep -v original | head -1)
-          echo "Deploying: $JAR_FILE"
+          WAR_FILE="target/GameVerseAcademy-0.0.1-SNAPSHOT.war"
+          echo "Deploying: $WAR_FILE"
           mvn deploy:deploy-file \
-            -Dfile=$JAR_FILE \
+            -Dfile="$WAR_FILE" \
             -DgroupId=ma.ac.esi \
             -DartifactId=GameVerseAcademy \
             -Dversion=0.0.1-SNAPSHOT \
-            -Dpackaging=jar \
+            -Dpackaging=war \
             -DrepositoryId=github \
             -Durl=https://maven.pkg.github.com/${{ github.repository }} \
             -B --no-transfer-progress
@@ -247,7 +247,7 @@ jobs:
             Registry : https://github.com/${{ github.repository }}/packages
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-            L'artefact est disponible dans GitHub Packages.
+            L'artefact WAR est disponible dans GitHub Packages.
 
             🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 

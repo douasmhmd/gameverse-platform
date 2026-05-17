@@ -8,7 +8,7 @@
   <artifactId>GameVerseAcademy</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <!-- Correction : JAR exécutable (Tomcat embarqué + shade). Structure Eclipse/Maven : src/main/java + src/main/webapp -->
-  <packaging>jar</packaging>
+  <packaging>war</packaging>
   <name>GameVerse Academy</name>
 
   <properties>
@@ -51,20 +51,17 @@
 
     <plugins>
       <!-- Évite le conflit « classifier » (maven-jar-plugin 3.4 + shade) : le JAR final est uniquement le fat JAR -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.4.1</version>
-        <executions>
-          <execution>
-            <id>default-jar</id>
-            <phase>none</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+     <plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-jar-plugin</artifactId>
+  <version>3.4.1</version>
+  <executions>
+    <execution>
+      <id>default-jar</id>
+      <phase>none</phase>
+    </execution>
+  </executions>
+</plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -134,6 +131,7 @@
             <configuration>
               <!-- Un seul artefact : JAR exécutable (remplace le jar « normal ») -->
               <shadedArtifactAttached>false</shadedArtifactAttached>
+<createDependencyReducedPom>false</createDependencyReducedPom>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
