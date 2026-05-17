@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameVerse Academy — Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="assets/css/gameverse-neon.css">
+</head>
+<body>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <span class="emoji">🎮</span>
+            <h1>GameVerse</h1>
+        </div>
+
+        <p class="meta" style="text-align:center; margin-bottom:28px;">
+            Connectez-vous pour accéder à la plateforme
+        </p>
+
+        <div id="error-message" class="error" style="display:none;">
+            <i class="bi bi-exclamation-triangle"></i> Email ou mot de passe incorrect
+        </div>
+
+        <form action="LoginController" method="post">
+            <div class="form-group">
+                <label><i class="bi bi-envelope"></i> Login (Email)</label>
+                <input type="email" name="login" placeholder="votre@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label><i class="bi bi-lock"></i> Password</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-box-arrow-in-right"></i> Log In
+            </button>
+        </form>
+
+       <p class="auth-link">
+           Pas encore de compte ? <a href="signup.html">Créer un compte</a>
+       </p>
+
+    </div>
+</div>
+
+<script>
+// Affiche le message d'erreur si ?error=1 est dans l'URL
+if (window.location.search.includes('error=1')) {
+    document.getElementById('error-message').style.display = 'block';
+}
+</script>
+
+</body>
+</html>

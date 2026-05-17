@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  Maven settings.xml — Nexus Repository Manager              ║
+  ║  À placer dans ~/.m2/settings.xml sur le serveur CI          ║
+  ║  Pour GitHub Actions : injecté dynamiquement via le workflow ║
+  ║  Pour Jenkins : enregistré dans "Config File Provider"       ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <!-- ── Credentials Nexus ──────────────────────────────────── -->
+  <servers>
+    <server>
+      <id>nexus-releases</id>
+      <username>${NEXUS_USERNAME}</username>
+      <password>${NEXUS_PASSWORD}</password>
+    </server>
+    <server>
+      <id>nexus-snapshots</id>
+      <username>${NEXUS_USERNAME}</username>
+      <password>${NEXUS_PASSWORD}</password>
+    </server>
+  </servers>
+
+  <!-- ── Miroir Nexus (proxy de tous les repos Maven) ─────────── -->
+  <!--
+    Nexus agit comme proxy central pour tous les artefacts Maven.
+    Tous les téléchargements passent par Nexus au lieu de Maven Central.
+  -->
+  <mirrors>
+    <mirror>
+      <id>nexus</id>
+      <mirrorOf>*</mirrorOf>
+      <url>${NEXUS_URL}/repository/maven-public/</url>
+    </mirror>
+  </mirrors>
+
+  <!-- ── Profil de déploiement ─────────────────────────────────── -->
+  <profiles>
+    <profile>
+      <id>nexus</id>
+      <repositories>
+        <repository>
+          <id>nexus-releases</id>
+          <url>${NEXUS_URL}/repository/maven-releases/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>nexus-snapshots</id>
+          <url>${NEXUS_URL}/repository/maven-snapshots/</url>
+          <releases><enabled>false</enabled></releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+        </repository>
+      </repositories>
+
+      <pluginRepositories>
+        <pluginRepository>
+          <id>nexus-releases</id>
+          <url>${NEXUS_URL}/repository/maven-releases/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>nexus</activeProfile>
+  </activeProfiles>
+
+</settings>

@@ -1,0 +1,392 @@
+name: CI/CD Pipeline — Java/Maven
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'hotfix/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Scrutation automatique : toutes les 15 minutes (polling du dépôt)
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Déclenchement manuel possible
+
+env:
+  JAVA_VERSION: '17'
+  MAVEN_OPTS: '-Xmx1024m -XX:MaxPermSize=256m'
+  NEXUS_URL: ${{ secrets.NEXUS_URL }}              # ex: http://your-nexus:8081
+  NEXUS_REPO_RELEASES: 'maven-releases'
+  NEXUS_REPO_SNAPSHOTS: 'maven-snapshots'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # JOB 1 — BUILD & COMPILE
+  # ─────────────────────────────────────────────
+  build:
+    name: 🔨 Build & Compile
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Historique complet pour analyses (SonarQube, etc.)
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure Maven settings (Nexus credentials)
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+            <servers>
+              <server>
+                <id>nexus-releases</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+              <server>
+                <id>nexus-snapshots</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+            <mirrors>
+              <mirror>
+                <id>nexus</id>
+                <mirrorOf>*</mirrorOf>
+                <url>${{ secrets.NEXUS_URL }}/repository/maven-public/</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+
+      - name: Compile project
+        run: mvn clean compile -B --no-transfer-progress
+
+      - name: Upload compiled classes
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-classes
+          path: target/classes/
+          retention-days: 1
+
+  # ─────────────────────────────────────────────
+  # JOB 2 — TESTS (unitaires + intégration)
+  # ─────────────────────────────────────────────
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure Maven settings (Nexus)
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+            <servers>
+              <server>
+                <id>nexus-releases</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+              <server>
+                <id>nexus-snapshots</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+            <mirrors>
+              <mirror>
+                <id>nexus</id>
+                <mirrorOf>*</mirrorOf>
+                <url>${{ secrets.NEXUS_URL }}/repository/maven-public/</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+
+      - name: Run unit tests
+        run: mvn test -B --no-transfer-progress
+
+      - name: Run integration tests
+        run: mvn verify -B --no-transfer-progress -Pintegration-tests
+        continue-on-error: false
+
+      - name: Publish test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: JUnit Test Results
+          path: target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+          retention-days: 7
+
+      - name: Send email notification on test failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP_HOST }}
+          server_port: ${{ secrets.MAIL_SMTP_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ [CI FAILURE] Tests échoués — ${{ github.repository }} @ ${{ github.ref_name }}"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: CI/CD Pipeline <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            🔴 ÉCHEC DES TESTS DÉTECTÉ
+
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            Dépôt     : ${{ github.repository }}
+            Branche   : ${{ github.ref_name }}
+            Commit    : ${{ github.sha }}
+            Auteur    : ${{ github.actor }}
+            Workflow  : ${{ github.workflow }}
+            Run ID    : ${{ github.run_id }}
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            Des tests ont échoué lors du pipeline CI/CD.
+            Veuillez consulter les logs pour plus de détails.
+
+            🔗 Voir les détails : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            — Pipeline CI/CD automatisé
+
+  # ─────────────────────────────────────────────
+  # JOB 3 — PACKAGE (JAR/WAR)
+  # ─────────────────────────────────────────────
+  package:
+    name: 📦 Package Artifact
+    runs-on: ubuntu-latest
+    needs: test
+
+    outputs:
+      artifact-version: ${{ steps.get-version.outputs.version }}
+      artifact-name: ${{ steps.get-version.outputs.artifactId }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure Maven settings (Nexus)
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+            <servers>
+              <server>
+                <id>nexus-releases</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+              <server>
+                <id>nexus-snapshots</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+            <mirrors>
+              <mirror>
+                <id>nexus</id>
+                <mirrorOf>*</mirrorOf>
+                <url>${{ secrets.NEXUS_URL }}/repository/maven-public/</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+
+      - name: Build package (skip tests — already run)
+        run: mvn package -DskipTests -B --no-transfer-progress
+
+      - name: Extract version from pom.xml
+        id: get-version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "artifactId=$ARTIFACT_ID" >> $GITHUB_OUTPUT
+          echo "📦 Artifact: $ARTIFACT_ID v$VERSION"
+
+      - name: Upload packaged artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-artifact
+          path: target/*.jar
+          retention-days: 30
+
+      - name: Send email notification on package failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP_HOST }}
+          server_port: ${{ secrets.MAIL_SMTP_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ [CI FAILURE] Packaging échoué — ${{ github.repository }} @ ${{ github.ref_name }}"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: CI/CD Pipeline <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            🔴 ÉCHEC DU PACKAGING
+
+            Dépôt   : ${{ github.repository }}
+            Branche : ${{ github.ref_name }}
+            Commit  : ${{ github.sha }}
+            Auteur  : ${{ github.actor }}
+
+            🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+  # ─────────────────────────────────────────────
+  # JOB 4 — DEPLOY TO NEXUS
+  # ─────────────────────────────────────────────
+  deploy-nexus:
+    name: 🚀 Deploy to Nexus
+    runs-on: ubuntu-latest
+    needs: package
+    # Déploiement uniquement depuis main ou develop
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure Maven settings (Nexus)
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+            <servers>
+              <server>
+                <id>nexus-releases</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+              <server>
+                <id>nexus-snapshots</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+            <mirrors>
+              <mirror>
+                <id>nexus</id>
+                <mirrorOf>*</mirrorOf>
+                <url>${{ secrets.NEXUS_URL }}/repository/maven-public/</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+
+      - name: Determine target Nexus repository
+        id: nexus-repo
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+            echo "repo=nexus-snapshots" >> $GITHUB_OUTPUT
+            echo "repo-url=${{ secrets.NEXUS_URL }}/repository/maven-snapshots/" >> $GITHUB_OUTPUT
+            echo "📌 SNAPSHOT → nexus-snapshots"
+          else
+            echo "repo=nexus-releases" >> $GITHUB_OUTPUT
+            echo "repo-url=${{ secrets.NEXUS_URL }}/repository/maven-releases/" >> $GITHUB_OUTPUT
+            echo "📌 RELEASE → nexus-releases"
+          fi
+
+      - name: Deploy artifact to Nexus
+        run: |
+          mvn deploy -DskipTests -B --no-transfer-progress \
+            -DaltDeploymentRepository=${{ steps.nexus-repo.outputs.repo }}::default::${{ steps.nexus-repo.outputs.repo-url }}
+
+      - name: Send success email notification
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP_HOST }}
+          server_port: ${{ secrets.MAIL_SMTP_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "✅ [CI SUCCESS] Déploiement réussi — ${{ needs.package.outputs.artifact-name }} v${{ needs.package.outputs.artifact-version }}"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: CI/CD Pipeline <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ✅ DÉPLOIEMENT NEXUS RÉUSSI
+
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            Artifact  : ${{ needs.package.outputs.artifact-name }}
+            Version   : ${{ needs.package.outputs.artifact-version }}
+            Dépôt     : ${{ github.repository }}
+            Branche   : ${{ github.ref_name }}
+            Commit    : ${{ github.sha }}
+            Auteur    : ${{ github.actor }}
+            Nexus URL : ${{ steps.nexus-repo.outputs.repo-url }}
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            L'artefact a été publié avec succès sur Nexus Repository.
+
+            🔗 Voir le run : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            — Pipeline CI/CD automatisé
+
+      - name: Send failure email notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP_HOST }}
+          server_port: ${{ secrets.MAIL_SMTP_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ [CI FAILURE] Déploiement Nexus échoué — ${{ github.repository }} @ ${{ github.ref_name }}"
+          to: ${{ secrets.MAIL_RECIPIENT }}
+          from: CI/CD Pipeline <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            🔴 ÉCHEC DU DÉPLOIEMENT NEXUS
+
+            Dépôt   : ${{ github.repository }}
+            Branche : ${{ github.ref_name }}
+            Commit  : ${{ github.sha }}
+            Auteur  : ${{ github.actor }}
+
+            🔗 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

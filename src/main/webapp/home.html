@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameVerse Academy | Launch Soon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="assets/css/gameverse-neon.css">
+</head>
+
+<body>
+
+<header class="home-header">
+    <div class="brand">🎮 GameVerse Academy</div>
+    <div class="contact">contact@gameverse-academy.com</div>
+</header>
+
+<section class="hero">
+
+    <h1>GameVerse Academy</h1>
+
+    <p class="subtitle">
+        La plateforme où les créateurs de mods transforment leur passion en revenus
+        et où les joueurs découvrent du contenu premium pour enrichir leur expérience de jeu.
+    </p>
+
+    <div class="hero-actions">
+        <a href="mods" class="btn btn-primary">
+            <i class="bi bi-joystick"></i> Voir les Mods
+        </a>
+        <a href="clients" class="btn btn-edit">
+            <i class="bi bi-people-fill"></i> Gestion Clients
+        </a>
+    </div>
+
+    <div class="countdown">
+        <div class="countdown-box">
+            <span id="days">00</span>
+            <small>Jours</small>
+        </div>
+        <div class="countdown-box">
+            <span id="hours">00</span>
+            <small>Heures</small>
+        </div>
+        <div class="countdown-box">
+            <span id="minutes">00</span>
+            <small>Minutes</small>
+        </div>
+        <div class="countdown-box">
+            <span id="seconds">00</span>
+            <small>Secondes</small>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="feature">
+            <h3>🎨 Creator Studio</h3>
+            <p>Crée ton profil, publie tes mods, construis ton portfolio et développe ta communauté.</p>
+        </div>
+
+        <div class="feature">
+            <h3>🛒 Marketplace</h3>
+            <p>Découvre, achète et télécharge des mods premium pour tes jeux préférés.</p>
+        </div>
+
+        <div class="feature">
+            <h3>🔐 Sécurité & Qualité</h3>
+            <p>Comptes sécurisés, transactions contrôlées et modération des contenus.</p>
+        </div>
+    </div>
+
+</section>
+
+<footer>
+    © 2026 GameVerse Academy — Projet pédagogique JEE (JSP &amp; Servlets)
+</footer>
+
+<script>
+// Countdown jusqu'au lancement
+const launchDate = new Date("2026-03-05T00:00:00").getTime();
+
+const countdown = setInterval(() => {
+    const now = new Date().getTime();
+    const distance = launchDate - now;
+
+    if (distance < 0) {
+        clearInterval(countdown);
+        document.getElementById("days").textContent = "00";
+        document.getElementById("hours").textContent = "00";
+        document.getElementById("minutes").textContent = "00";
+        document.getElementById("seconds").textContent = "00";
+        return;
+    }
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    document.getElementById("days").textContent    = String(days).padStart(2, "0");
+    document.getElementById("hours").textContent   = String(hours).padStart(2, "0");
+    document.getElementById("minutes").textContent = String(minutes).padStart(2, "0");
+    document.getElementById("seconds").textContent = String(seconds).padStart(2, "0");
+}, 1000);
+</script>
+
+</body>
+</html>
