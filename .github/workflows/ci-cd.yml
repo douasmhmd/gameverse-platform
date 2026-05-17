@@ -207,18 +207,7 @@ jobs:
         run: mvn package -DskipTests -B --no-transfer-progress
 
       - name: Deploy WAR to GitHub Packages
-        run: |
-          WAR_FILE="target/GameVerseAcademy-0.0.1-SNAPSHOT.war"
-          echo "Deploying: $WAR_FILE"
-          mvn deploy:deploy-file \
-            -Dfile="$WAR_FILE" \
-            -DgroupId=ma.ac.esi \
-            -DartifactId=GameVerseAcademy \
-            -Dversion=0.0.1-SNAPSHOT \
-            -Dpackaging=war \
-            -DrepositoryId=github \
-            -Durl=https://maven.pkg.github.com/${{ github.repository }} \
-            -B --no-transfer-progress
+        run: mvn deploy -DskipTests -B --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}

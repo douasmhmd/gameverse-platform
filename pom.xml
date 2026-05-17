@@ -192,7 +192,7 @@
   </repository>
   <snapshotRepository>
     <id>github</id>
-    <name>GitHub Packages</name>
+    <name>GitHub Packages Snapshots</name>
     <url>https://maven.pkg.github.com/douasmhmd/gameverse-platform</url>
   </snapshotRepository>
 </distributionManagement>
