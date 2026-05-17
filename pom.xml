@@ -150,4 +150,16 @@
       </plugin>
     </plugins>
   </build>
+<distributionManagement>
+    <repository>
+      <id>local-nexus-sim</id>
+      <name>Depot distant simule (remplace Nexus)</name>
+      <url>file:///C:/nexus-repo</url>
+    </repository>
+    <snapshotRepository>
+      <id>local-nexus-sim</id>
+      <name>Depot distant simule - snapshots</name>
+      <url>file:///C:/nexus-repo</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>
