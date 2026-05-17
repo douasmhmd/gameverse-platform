@@ -132,7 +132,7 @@
       <configuration>
         <shadedArtifactAttached>false</shadedArtifactAttached>
         <createDependencyReducedPom>false</createDependencyReducedPom>
-        
+        <finalName>GameVerseAcademy-0.0.1-SNAPSHOT</finalName>
         <transformers>
           <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
             <mainClass>ma.ac.esi.gameverseacademy.Main</mainClass>
